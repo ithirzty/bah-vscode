@@ -1,0 +1,97 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Bah",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#chars"
+		}
+	],
+	"repository": {
+		"function": {
+			"patterns":[{
+				"name":"entity.name.function",
+				"match":"\\b(function)\\b"
+			}]
+		},
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.bah",
+				"match": "\\b(if|else|for|struct|const|return|extend|new|break|continue|default|switch|case|while|typedef|function|async|in|chan|map|buffer|capture|then)\\b"
+			},
+			{
+				"name": "entity.name.type",
+				"match": "\\b((u?int(32)?)|(float(32)?)|cpstring|char|byte|ptr)\\b"
+				},
+			{
+				"name":"entity.name.function",
+				"match":"\\b(\\w+)\\s*\\("
+			},
+			{
+				"name":"comment.line",
+				"match":"(//.*)"
+			},
+			{
+				"name":"keyword.other",
+				"match":"([\\*/=\\+\\-%!<>])"
+			},
+			{
+				"name":"constant.numeric",
+				"match":"\\b([0-9\\.]+)\\b"
+			},
+			{
+				"name":"markup.italic",
+				"match":"(#\\w+)\\b"
+			},
+			{
+				"name":"variable.name",
+				"match":"(\\b(\\w+)\\b)"
+			},
+			{
+				"match": "\\b(true|false|null)\\b",
+				"name": "entity.name.tag"
+			}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape",
+					"match": "\\\\."
+				}
+			]
+		},
+		"chars": {
+			"patterns": [
+				{
+					"begin": "'",
+					"end": "'",
+					"name": "string.quoted.single",
+					"patterns": [
+						{
+							"match": "\\\\|'",
+							"name": "invalid"
+						},
+						{
+							"match": "\\G(\\\\([0-7]{3}|[abfnrtv\\\\'\"]|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})|.)(?=')",
+							"name": "constant.character"
+						},
+						{
+							"match": "[^']+",
+							"name": "invalid"
+						}
+					]
+				}
+			]
+		}
+	},
+	"scopeName": "source.bah"
+}
