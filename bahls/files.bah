@@ -1,0 +1,149 @@
+isMainFile(f cpstring, l int) bool {
+    mi = 0
+    seq = "main"; seql = strlen(seq)
+    j=0; for j < l, j++ {
+        if seq[mi] == f[j] {
+            mi++
+            if mi == seql {
+                j++
+                break
+            }
+        } else {
+            mi = 0
+        }
+    }
+
+    if j == l {
+        return false
+    }
+
+    for j < l, j++ {
+        if isSpace(f[j]) == false {
+            break
+        }
+    }
+
+    if f[j] == '(' {
+        return true
+    }
+    return false
+}
+
+validateMainFile() {
+    logMsg("bah "+mainFile+" -debug")
+    r = command("bah "+mainFile+" -debug").runBytes()
+    logMsg("Done.")
+
+    j = parseJson(arrToStr(r))
+
+    clear(variables)
+    clear(funcs)
+    clear(strcts)
+
+    diagnostics = []Diagnostic
+
+    i=0; for i < len(j.children), i++ {
+        e = j.children[i]
+        name = e.get("name").str()
+        
+        if name == "file_end" || name == "error_end" {
+            break
+        }
+
+        path = e.get("path").str()
+
+        if name == "error" || name == "warning" || name == "notice" {
+            efile = splitStringBefore(string(path), ":")
+            eline = strToInt(path[strlen(efile)+1:])
+            
+            diag = Diagnostic {
+                message: e.get("element").str()
+                source: "bah"
+            }
+
+            if name == "error" {
+                diag.severity = DiagnosticSeverityError
+            } else if name == "warning" {
+                diag.severity = DiagnosticSeverityWarning
+            } else if name == "notice" {
+                diag.severity = DiagnosticSeverityInformation
+            }
+
+            ej = parseJson(e.get("range").str())
+
+
+            diag.range.start = Position {
+                line: eline-1
+                character: strToInt(ej.children[0].str()) - 1
+            }
+
+            diag.range.end = Position {
+                line: eline-1
+                character: strToInt(ej.children[1].str()) - 1
+            }
+
+            diagnostics[len(diagnostics)] = diag
+            continue
+        }
+        
+        ej = parseJson(e.get("element").str())
+        if name == "fn_declare" {
+            fn = new func
+            ej.scan(fn)
+            fn.path = path
+            funcs[len(funcs)] = fn
+        } else if name == "struct_declare" {
+            s = new strct
+            ej.scan(s)
+            s.path = path
+            strcts[len(strcts)] = s
+        } else if name == "var_declaration" {
+            v = new variable
+            ej.scan(v)
+            v.path = path
+            variables[len(variables)] = v
+        } else if name == "var_end" {
+            efile = splitStringBefore(string(path), ":")
+            eline = strToInt(path[strlen(efile)+1:])
+            k=len(variables)-1; for k >= 0, k-- {
+                v = variables[k]
+                file = splitStringBefore(string(v.path), ":")
+                line = strToInt(v.path[strlen(file)+1:])
+                if efile == file && eline >= line {
+                    v.end = eline
+                    break
+                }
+            }
+        } 
+    }
+
+    pdp = PublishDiagnosticsParams {
+        uri: "file://"+currentDir+"/"+mainFile
+        diagnostics: diagnostics
+    }
+
+    sendDiagnostic(&pdp)
+
+}
+
+validateFiles() {
+    logMsg("validating: "+currentDir)
+    setCurrentPath(currentDir)
+    files = listFiles(".")
+    fs = fileStream{}
+
+    i=0; for i < len(files), i++ {
+        if string(files[i]).hasSuffix(".bah") {
+            fs.open(files[i], "r")
+            f = fs.readContent()
+            l = fs.getSize()
+            fs.close()
+            if isMainFile(f, l) {
+                mainFile = files[i]
+            }
+        }
+    }
+
+    validateMainFile()
+
+}

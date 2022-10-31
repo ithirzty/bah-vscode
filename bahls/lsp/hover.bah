@@ -1,0 +1,13 @@
+struct hoverRequest {
+    textDocument: TextDocument
+    position: Position
+}
+
+struct Hover {
+    contents: MarkupContent
+}
+
+struct DefinitionClientCapabilities {
+    dynamicRegistration: bool
+    linkSupport: bool
+}

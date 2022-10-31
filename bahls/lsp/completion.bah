@@ -1,0 +1,59 @@
+const CompletionItemKindText = 1
+const CompletionItemKindMethod = 2
+const CompletionItemKindFunction = 3
+const CompletionItemKindConstructor = 4
+const CompletionItemKindField = 5
+const CompletionItemKindVariable = 6
+const CompletionItemKindClass = 7
+const CompletionItemKindInterface = 8
+const CompletionItemKindModule = 9
+const CompletionItemKindProperty = 10
+const CompletionItemKindUnit = 11
+const CompletionItemKindValue = 12
+const CompletionItemKindEnum = 13
+const CompletionItemKindKeyword = 14
+const CompletionItemKindSnippet = 15
+const CompletionItemKindColor = 16
+const CompletionItemKindFile = 17
+const CompletionItemKindReference = 18
+const CompletionItemKindFolder = 19
+const CompletionItemKindEnumMember = 20
+const CompletionItemKindConstant = 21
+const CompletionItemKindStruct = 22
+const CompletionItemKindEvent = 23
+const CompletionItemKindOperator = 24
+const CompletionItemKindTypeParameter = 2
+
+struct MarkupContent {
+    kind: cpstring = "plaintext"
+    value: cpstring
+}
+
+struct CompletionItem {
+    label: cpstring
+    labelDetails: cpstring
+    kind: int
+    detail: cpstring
+    documentation: MarkupContent
+    insertText: cpstring
+    data: cpstring
+}
+
+struct CompletionList {
+    isIncomplete: bool
+    items: []CompletionItem
+}
+
+struct TextDocument {
+    uri: cpstring
+}
+
+struct CompletionContext {
+    triggerKind: int
+}
+
+struct CompletionRequest {
+    textDocument: TextDocument
+    position: Position
+    context: CompletionContext
+}

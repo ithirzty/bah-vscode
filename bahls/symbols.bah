@@ -1,0 +1,23 @@
+struct symbol {
+    name: cpstring
+    path: cpstring
+}
+
+struct variable extend symbol {
+    type: cpstring
+    end: int
+    isGlobal: bool
+}
+
+struct func extend symbol {
+    args: []variable*
+    returns: cpstring
+}
+
+struct strct extend symbol {
+    membs: []variable*
+}
+
+variables = []variable*
+funcs = []func*
+strcts = []strct*

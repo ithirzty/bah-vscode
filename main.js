@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 const fs = require("fs");
 const path = require("path");
+const cproc = require("child_process");
 
 LanguageClient = require("vscode-languageclient").LanguageClient;
 TransportKind = require("vscode-languageclient").TransportKind;
@@ -30,21 +31,37 @@ let client;
 
 
 
-let serverModule = __dirname+'/server.js';
+// let serverModule = __dirname+'/lsp/main';
   // The debug options for the server
   // --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging
-  let debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+  // let debugOptions = { execArgv: [''] };
 
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   let serverOptions = {
-    run: { module: serverModule, transport: TransportKind.ipc },
-    debug: {
-      module: serverModule,
-      transport: TransportKind.ipc,
-      options: debugOptions
-    }
+    command: __dirname+'/bahls/main'
+    // run: { 
+    //   module: serverModule,
+    //   transport: TransportKind.ipc 
+    // },
+    // debug: {
+    //   module: serverModule,
+    //   transport: TransportKind.ipc,
+    //   options: debugOptions
+    // }
   };
+
+  console.log(__dirname+'/bahls')
+  
+  if (!fs.existsSync(serverOptions.command)) {
+    console.log("compiling")
+    stdout = cproc.execSync('bah main.bah -o main', {
+      cwd: __dirname+'/bahls'
+    })
+    console.log("done: ", stdout)
+  } else {
+    console.log("already compiled")
+  }
 
   // Options to control the language client
   let clientOptions = {
@@ -66,7 +83,7 @@ let serverModule = __dirname+'/server.js';
 
   
   client.onReady().then(()=>{
-
+    console.log("ready!")
   })
   // context.subscriptions.push(client.start())
 

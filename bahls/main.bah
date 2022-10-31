@@ -1,0 +1,275 @@
+#import "iostream.bah"
+#import "string.bah"
+#import "json.bah"
+#import "path.bah"
+#import "exec.bah"
+
+#define! getchar() char
+
+logMsg(s cpstring) {
+    return
+    fs = fileStream{}
+    fs.open("log.txt", "a")
+    fs.writeFile(s+"\n")
+    fs.close()
+}
+
+currentDir = ""
+mainFile = ""
+
+#include "lexer.bah"
+#include "symbols.bah"
+#include "lsp/lsp.bah"
+#include "files.bah"
+
+handleInitialize(req request*) {
+    resp = InitializeResult{}
+    resp.capabilities = ServerCapabilities {
+        textDocumentSync: TextDocumentSyncIncremental
+        hoverProvider: true
+    }
+    resp.capabilities.completionProvider = CompletionOptions {
+        resolveProvider: true
+    }
+
+    resp.capabilities.definition = DefinitionClientCapabilities {
+        linkSupport: true
+    }
+
+    resp.serverInfo = ServerInfo {
+        name: "bahlanguageserver"
+    }
+
+    currentDir = req.body.get("params").get("rootPath").str()
+
+    id = strToInt(req.body.get("id").str())
+    sendResponse(&resp, id)
+}
+
+handleCompletion(req request*) {
+    cr = CompletionRequest{}
+    req.body.get("params").scan(&cr)
+    id = strToInt(req.body.get("id").str())
+
+    fileLoc = cr.textDocument.uri
+    fileLoc = fileLoc[7:]
+
+    cs = []CompletionItem
+
+    i=0; for i < len(funcs), i++ {
+        cs[len(cs)] = CompletionItem {
+            label: funcs[i].name
+            kind: CompletionItemKindFunction
+            data: funcs[i].path
+        }
+    }
+
+    i=0; for i < len(strcts), i++ {
+        cs[len(cs)] = CompletionItem {
+            label: strcts[i].name
+            kind: CompletionItemKindClass
+            data: strcts[i].path
+        }
+    }
+
+    i=0; for i < len(variables), i++ {
+        v = variables[i]
+
+        file = splitStringBefore(string(v.path), ":")
+        line = strToInt(v.path[strlen(file)+1:])
+
+        if v.isGlobal == false {
+            if fileLoc != file {
+                continue
+            }
+            if cr.position.line+1 < line || (line > v.end && v.end != 0) {
+                continue
+            }
+        }
+
+        cs[len(cs)] = CompletionItem {
+            label: v.name
+            kind: CompletionItemKindVariable
+            data: v.path
+        }
+    }
+
+    cl = CompletionList{
+        isIncomplete: false
+        items: cs
+    }
+    sendResponse(&cl, id)
+}
+
+
+handleResolveCompletion(req request*) {
+    cr = CompletionItem{}
+    req.body.get("params").scan(&cr)
+    id = strToInt(req.body.get("id").str())
+
+    if cr.kind == CompletionItemKindFunction {
+        i=0; for i < len(funcs), i++ {
+            fn = funcs[i]
+            if fn.path == cr.data && fn.name == cr.label {
+                args = ""
+                j=0; for j < len(fn.args), j++ {
+                    a = fn.args[j]
+                    args += a.type
+                    if j+1 < len(fn.args) {
+                        args += ", "
+                    }
+                }
+                cr.documentation = MarkupContent {
+                    kind: "markdown"
+                    value: "```c\n"+fn.name+"("+args+")"+fn.returns+"\n```\n\n["+fn.path+"]("+markdownPath(fn.path)+")"
+                }
+                break
+            }
+        }
+    }
+
+    if cr.kind == CompletionItemKindClass {
+        i=0; for i < len(strcts), i++ {
+            s = strcts[i]
+            if s.path == cr.data && s.name == cr.label {
+                decl = "```c\nstruct "+s.name+" {\n"
+                j=0; for j < len(s.membs), j++ {
+                    decl += "  "+s.membs[j].name + ": " + s.membs[j].type + "\n"
+                }
+                decl += "}\n```\n\n"
+                cr.documentation = MarkupContent {
+                    kind: "markdown"
+                    value: decl+"["+s.path+"]("+markdownPath(s.path)+")"
+                }
+
+            }
+        }
+    }
+
+    if cr.kind == CompletionItemKindVariable {
+        i=0; for i < len(variables), i++ {
+            v = variables[i]
+            if v.path == cr.data && v.name == cr.label {
+                cr.documentation = MarkupContent {
+                    kind: "markdown"
+                    value: "```c\n"+v.name+" "+v.type+"\n```\n\n["+v.path+"]("+markdownPath(v.path)+")"
+                } 
+                break
+            }
+        }
+    }
+
+    sendResponse(&cr, id)
+}
+
+handleHover(req request*) {
+    hr = hoverRequest{}
+    req.body.get("params").scan(&hr)
+    id = strToInt(req.body.get("id").str())
+
+    fileLoc = hr.textDocument.uri[7:]
+
+    fs = fileStream{}
+    fs.open(fileLoc, "r")
+    f = fs.readContent()
+    toks = lexer(f, fs.getSize())
+    fs.close()
+    hresp = Hover{}
+    hresp.contents.kind = "markdown"
+
+    i=0; for i < len(toks), i++ {
+        if toks[i].line-1 == hr.position.line && toks[i].linePos <= hr.position.character && toks[i].linePos+strlen(toks[i].ogCont) >= hr.position.character {
+            val = toks[i].ogCont
+
+            if toks[i].type != TOKEN_TYPE_VAR {
+                break
+            }
+
+            j=0; for j < len(variables), j++ {
+                v = variables[j]
+
+                if v.name != val {
+                    continue
+                }
+
+                file = splitStringBefore(string(v.path), ":")
+                line = strToInt(v.path[strlen(file)+1:])
+
+                if v.isGlobal == false {
+                    if fileLoc != file || (line > v.end && v.end != 0) {
+                        logMsg(v.name+": wrong loc ("+intToStr(hr.position.line)+" < "+intToStr(line)+" > "+intToStr(v.end)+"")
+                        continue
+                    }
+                }
+
+                hresp.contents.value = "```c\n"+v.name+" "+v.type+"\n```\n\n["+v.path+"]("+markdownPath(v.path)+")"
+
+                break
+            }
+
+            if j != len(variables) {
+                break
+            }
+
+            j=0; for j < len(funcs), j++ {
+                fn = funcs[j]
+
+                if fn.name != val {
+                    continue
+                }
+
+                args = ""
+                k=0; for k < len(fn.args), k++ {
+                    a = fn.args[k]
+                    args += a.type
+                    if k+1 < len(fn.args) {
+                        args += ", "
+                    }
+                }
+
+                hresp.contents.value = "```c\n"+fn.name+"("+args+") "+fn.returns+"\n```\n\n["+fn.path+"]("+markdownPath(fn.path)+")"
+
+                break
+            }
+
+            break
+        }
+    }
+
+
+    sendResponse(&hresp, id)
+}
+
+main(args []cpstring) int {
+    logMsg("===start===")
+    
+    i=0; for i < 99, i++ {        
+        logMsg("waitting...")
+        req = getRequest()
+        
+        m = req.body.get("method")
+
+        if m == null {
+            continue
+        }
+
+        name = m.str()
+
+        if name == "initialize" {
+            handleInitialize(req)
+        } else if name == "initialized" {
+            validateFiles()
+        } else if name == "textDocument/didSave" {
+            validateFiles()
+        } else if name == "textDocument/completion" {
+            handleCompletion(req)
+        } else if name == "completionItem/resolve" {
+            handleResolveCompletion(req)
+        } else if name == "textDocument/hover" {
+            handleHover(req)
+        }
+
+    }
+
+    return 0
+}

@@ -1,0 +1,30 @@
+struct Position {
+    line: int
+    character: int
+}
+
+struct Range {
+    start: Position
+    end: Position
+}
+
+const DiagnosticSeverityError = 1
+const DiagnosticSeverityWarning = 2
+const DiagnosticSeverityInformation = 3
+const DiagnosticSeverityHint = 4
+
+struct Diagnostic {
+    severity: int
+    range: Range
+    message: cpstring
+    source: cpstring
+}
+
+struct PublishDiagnosticsParams {
+    uri: cpstring
+    diagnostics: []Diagnostic
+}
+
+sendDiagnostic(param PublishDiagnosticsParams*) {
+    sendRequest("textDocument/publishDiagnostics", &param, idCount)
+}

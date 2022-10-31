@@ -1,0 +1,23 @@
+const TextDocumentSyncNone = 0
+const TextDocumentSyncFull = 1
+const TextDocumentSyncIncremental = 2
+
+struct CompletionOptions {
+    resolveProvider: bool
+}
+
+struct ServerCapabilities {
+    textDocumentSync: int
+    completionProvider: CompletionOptions
+    hoverProvider: bool
+    definition: DefinitionClientCapabilities
+}
+
+struct ServerInfo {
+    name: cpstring
+}
+
+struct InitializeResult {
+    capabilities: ServerCapabilities
+    serverInfo: ServerInfo
+}
