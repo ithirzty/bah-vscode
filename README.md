@@ -18,7 +18,7 @@ First, you will need the Bah compiler installed on your machine.
 ### Linux
 ```bash
 git clone https://github.com/ithirzty/bah-vscode
-cp ./bah-vscode ~/.vscode/extensions/
+cp -r ./bah-vscode ~/.vscode/extensions/
 ```
 
 ### Windows
