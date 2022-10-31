@@ -126,13 +126,19 @@ validateMainFile() {
 
 }
 
-validateFiles() {
+validateFiles() bool {
     logMsg("validating: "+currentDir)
     setCurrentPath(currentDir)
     files = listFiles(".")
     fs = fileStream{}
 
+    folders = []cpstring
+
     i=0; for i < len(files), i++ {
+        if isFolder(files[i]) {
+            folders[len(folders)] = files[i]
+            continue
+        }
         if string(files[i]).hasSuffix(".bah") {
             fs.open(files[i], "r")
             f = fs.readContent()
@@ -140,10 +146,21 @@ validateFiles() {
             fs.close()
             if isMainFile(f, l) {
                 mainFile = files[i]
+                validateMainFile()
+                return true
             }
         }
     }
 
-    validateMainFile()
+    curr = currentDir
+    i=0; for i < len(folders), i++ {
+        setCurrentPath(curr)
+        currentDir = curr + "/" + folders[i]
+        if validateFiles() {
+            return true
+        }
+    }
+    currentDir = curr
 
+    return false
 }
