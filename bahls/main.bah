@@ -14,6 +14,14 @@ logMsg(s cpstring) {
     fs.close()
 }
 
+onEnd() {
+    files = listFiles(".tmp_bah")
+    i=0; for i < len(files), i++ {
+        removeFile(".tmp_bah/"+files[i])
+    }
+    removeFile(".tmp_bah")
+}
+
 currentDir = ""
 mainFile = ""
 
@@ -243,7 +251,7 @@ handleHover(req request*) {
 main(args []cpstring) int {
     logMsg("===start===")
     
-    i=0; for i < 99, i++ {        
+    for 1==1 {        
         logMsg("waitting...")
         req = getRequest()
         
@@ -270,6 +278,8 @@ main(args []cpstring) int {
         }
 
     }
+
+    removeFile(".tmp_bah")
 
     return 0
 }

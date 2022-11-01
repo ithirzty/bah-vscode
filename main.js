@@ -1,6 +1,5 @@
 const vscode = require('vscode');
 const fs = require("fs");
-const path = require("path");
 const cproc = require("child_process");
 
 LanguageClient = require("vscode-languageclient").LanguageClient;

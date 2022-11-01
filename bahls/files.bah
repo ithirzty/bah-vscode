@@ -26,7 +26,6 @@ validateMainFile() {
     r = fs.readContent()
     fs.close()
     removeFile(".tmp_bah/out.json")
-    removeFile(".tmp_bah")
 
     j = parseJson(r)
 
@@ -120,8 +119,33 @@ validateMainFile() {
 
 }
 
+compileDebug() {
+    command("bah .tmp_bah/debug.bah").runBytes()
+    removeFile(".tmp_bah/debug.bah")
+    fs = fileStream{}
+    if fileExists(".vscode/launch.json") == false {
+        mkdir(".vscode", 0777)
+        fs.open("./.vscode/launch.json", "w")
+        fs.writeFile("//This launch.json file is made to work with extensions such as 'cdt-gdb-vscode'
+{
+    \"version\": \"0.2.0\",
+    \"configurations\": [
+        {
+            \"type\": \"gdb\",
+            \"request\": \"launch\",
+            \"name\": \"GDB (bah) launch\",
+            \"program\": \"${workspaceFolder}/.tmp_bah/debug\"
+        }
+    ]
+}
+")
+        fs.close()
+    }
+}
+
 validateFiles(dir cpstring) bool {
     logMsg("validating: "+dir)
+    removeFile(".tmp_bah/debug")
     files = listFiles(dir)
     fs = fileStream{}
 
@@ -141,6 +165,14 @@ validateFiles(dir cpstring) bool {
                 mainFile = files[i]
                 currentDir = dir
                 validateMainFile()
+
+                fs = fileStream{}
+                fs.open(".tmp_bah/debug.bah", "w")
+                fs.writeFile("#cLib \"g\"\n#include \"../"+mainFile+"\"")
+                fs.close()
+                async compileDebug()
+                
+
                 return true
             }
         }

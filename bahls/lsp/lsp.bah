@@ -5,6 +5,7 @@ struct request {
 getCharSafe() char {
     c = getchar()
     if c == <char>-1 {
+        onEnd()
         exit(0)
     }
     return c
