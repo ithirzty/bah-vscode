@@ -38,8 +38,6 @@ getRequest() request* {
 
     nb = strToInt(arrToStr(buff))
 
-    logMsg("[reading: "+intToStr(nb)+"]")
-
     clear(buff)
 
     i=0; for i < nb, i++ {
@@ -51,7 +49,6 @@ getRequest() request* {
     logMsg("-> '"+s)
 
     req.body = parseJson(s)
-    logMsg("[finished reading]")
     return req
 }
 

@@ -1,40 +1,34 @@
 isMainFile(f cpstring, l int) bool {
-    mi = 0
-    seq = "main"; seql = strlen(seq)
-    j=0; for j < l, j++ {
-        if seq[mi] == f[j] {
-            mi++
-            if mi == seql {
-                j++
-                break
+    toks = lexer(f, l)
+    i=0; for i < len(toks), i++ {
+        if toks[i].type == TOKEN_TYPE_VAR && toks[i].ogCont == "main" && i+1 < len(toks) && toks[i+1].ogCont == "(" {
+            currLine = toks[i].line
+            for i < len(toks), i++ {
+                if toks[i].line != currLine {
+                    if toks[i-1].ogCont == "}" {
+                        return true
+                    }
+                }
             }
-        } else {
-            mi = 0
+            return true
         }
-    }
-
-    if j == l {
-        return false
-    }
-
-    for j < l, j++ {
-        if isSpace(f[j]) == false {
-            break
-        }
-    }
-
-    if f[j] == '(' {
-        return true
     }
     return false
 }
 
 validateMainFile() {
-    logMsg("bah "+mainFile+" -debug")
-    r = command("bah "+mainFile+" -debug").runBytes()
-    logMsg("Done.")
+    logMsg("validating main file: "+mainFile)
+    mkdir(".tmp_bah", 0777)
+    command("bah "+currentDir+"/"+mainFile+" -debug > .tmp_bah/out.json").runBytes()
 
-    j = parseJson(arrToStr(r))
+    fs = fileStream{}
+    fs.open(".tmp_bah/out.json", "r")
+    r = fs.readContent()
+    fs.close()
+    removeFile(".tmp_bah/out.json")
+    removeFile(".tmp_bah")
+
+    j = parseJson(r)
 
     clear(variables)
     clear(funcs)
@@ -126,41 +120,37 @@ validateMainFile() {
 
 }
 
-validateFiles() bool {
-    logMsg("validating: "+currentDir)
-    setCurrentPath(currentDir)
-    files = listFiles(".")
+validateFiles(dir cpstring) bool {
+    logMsg("validating: "+dir)
+    files = listFiles(dir)
     fs = fileStream{}
 
     folders = []cpstring
 
     i=0; for i < len(files), i++ {
-        if isFolder(files[i]) {
+        if isFolder(dir+"/"+files[i]) && files[i][0] != '.' {
             folders[len(folders)] = files[i]
             continue
         }
         if string(files[i]).hasSuffix(".bah") {
-            fs.open(files[i], "r")
+            fs.open(dir+"/"+files[i], "r")
             f = fs.readContent()
             l = fs.getSize()
             fs.close()
             if isMainFile(f, l) {
                 mainFile = files[i]
+                currentDir = dir
                 validateMainFile()
                 return true
             }
         }
     }
 
-    curr = currentDir
     i=0; for i < len(folders), i++ {
-        setCurrentPath(curr)
-        currentDir = curr + "/" + folders[i]
-        if validateFiles() {
+        if validateFiles(dir+"/"+folders[i]) {
             return true
         }
     }
-    currentDir = curr
 
     return false
 }

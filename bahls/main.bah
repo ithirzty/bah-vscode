@@ -114,14 +114,14 @@ handleResolveCompletion(req request*) {
                 args = ""
                 j=0; for j < len(fn.args), j++ {
                     a = fn.args[j]
-                    args += a.type
+                    args += a.name + " " + a.type
                     if j+1 < len(fn.args) {
                         args += ", "
                     }
                 }
                 cr.documentation = MarkupContent {
                     kind: "markdown"
-                    value: "```c\n"+fn.name+"("+args+")"+fn.returns+"\n```\n\n["+fn.path+"]("+markdownPath(fn.path)+")"
+                    value: "```bah\n"+fn.name+"("+args+")"+fn.returns+"\n```\n\n["+fn.path+"]("+markdownPath(fn.path)+")"
                 }
                 break
             }
@@ -132,7 +132,7 @@ handleResolveCompletion(req request*) {
         i=0; for i < len(strcts), i++ {
             s = strcts[i]
             if s.path == cr.data && s.name == cr.label {
-                decl = "```c\nstruct "+s.name+" {\n"
+                decl = "```bah\nstruct "+s.name+" {\n"
                 j=0; for j < len(s.membs), j++ {
                     decl += "  "+s.membs[j].name + ": " + s.membs[j].type + "\n"
                 }
@@ -152,7 +152,7 @@ handleResolveCompletion(req request*) {
             if v.path == cr.data && v.name == cr.label {
                 cr.documentation = MarkupContent {
                     kind: "markdown"
-                    value: "```c\n"+v.name+" "+v.type+"\n```\n\n["+v.path+"]("+markdownPath(v.path)+")"
+                    value: "```bah\n"+v.name+" "+v.type+"\n```\n\n["+v.path+"]("+markdownPath(v.path)+")"
                 } 
                 break
             }
@@ -202,7 +202,7 @@ handleHover(req request*) {
                     }
                 }
 
-                hresp.contents.value = "```c\n"+v.name+" "+v.type+"\n```\n\n["+v.path+"]("+markdownPath(v.path)+")"
+                hresp.contents.value = "```bah\n"+v.name+" "+v.type+"\n```\n\n["+v.path+"]("+markdownPath(v.path)+")"
 
                 break
             }
@@ -221,13 +221,13 @@ handleHover(req request*) {
                 args = ""
                 k=0; for k < len(fn.args), k++ {
                     a = fn.args[k]
-                    args += a.type
+                    args += a.name + " " + a.type
                     if k+1 < len(fn.args) {
                         args += ", "
                     }
                 }
 
-                hresp.contents.value = "```c\n"+fn.name+"("+args+") "+fn.returns+"\n```\n\n["+fn.path+"]("+markdownPath(fn.path)+")"
+                hresp.contents.value = "```bah\n"+fn.name+"("+args+") "+fn.returns+"\n```\n\n["+fn.path+"]("+markdownPath(fn.path)+")"
 
                 break
             }
@@ -258,9 +258,9 @@ main(args []cpstring) int {
         if name == "initialize" {
             handleInitialize(req)
         } else if name == "initialized" {
-            validateFiles()
+            validateFiles(currentDir)
         } else if name == "textDocument/didSave" {
-            validateFiles()
+            validateFiles(currentDir)
         } else if name == "textDocument/completion" {
             handleCompletion(req)
         } else if name == "completionItem/resolve" {
