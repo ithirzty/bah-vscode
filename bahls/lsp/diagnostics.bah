@@ -6,6 +6,17 @@ struct Position {
 struct Range {
     start: Position
     end: Position
+
+    validate() {
+        if this.start.character < 0 {
+            this.start.character = 0
+        }
+        if this.end.character < 0 {
+            this.end.character = 0
+        }
+
+    }
+
 }
 
 const DiagnosticSeverityError = 1

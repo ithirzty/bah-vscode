@@ -16,6 +16,8 @@ isMainFile(f cpstring, l int) bool {
     return false
 }
 
+pdps = []PublishDiagnosticsParams
+
 validateMainFile() {
     logMsg("validating main file: "+mainFile)
     mkdir(".tmp_bah", 0777)
@@ -33,12 +35,14 @@ validateMainFile() {
     clear(funcs)
     clear(strcts)
 
-    diagnostics = []Diagnostic
+    k=0; for k < len(pdps), k++ {
+        clear(pdps[k].diagnostics)
+    }
 
     i=0; for i < len(j.children), i++ {
         e = j.children[i]
         name = e.get("name").str()
-        
+
         if name == "file_end" || name == "error_end" {
             break
         }
@@ -49,6 +53,24 @@ validateMainFile() {
             efile = splitStringBefore(string(path), ":")
             eline = strToInt(path[strlen(efile)+1:])
             
+            pdp = PublishDiagnosticsParams{}
+
+            uri = "file://"+efile
+
+            k=0; for k < len(pdps), k++ {
+                if pdps[k].uri == uri {
+                    pdp = pdps[k]
+                    break
+                }
+            }
+
+            if k == len(pdps) {
+                pdp = PublishDiagnosticsParams {
+                    uri: uri
+                }
+                pdps[len(pdps)] = pdp
+            }
+
             diag = Diagnostic {
                 message: e.get("element").str()
                 source: "bah"
@@ -74,8 +96,9 @@ validateMainFile() {
                 line: eline-1
                 character: strToInt(ej.children[1].str()) - 1
             }
+            diag.range.validate()
 
-            diagnostics[len(diagnostics)] = diag
+            pdp.diagnostics[len(pdp.diagnostics)] = diag
             continue
         }
         
@@ -98,7 +121,7 @@ validateMainFile() {
         } else if name == "var_end" {
             efile = splitStringBefore(string(path), ":")
             eline = strToInt(path[strlen(efile)+1:])
-            k=len(variables)-1; for k >= 0, k-- {
+            k=len(variables)-1; for k > 0, k-- {
                 v = variables[k]
                 file = splitStringBefore(string(v.path), ":")
                 line = strToInt(v.path[strlen(file)+1:])
@@ -107,15 +130,12 @@ validateMainFile() {
                     break
                 }
             }
-        } 
+        }
     }
 
-    pdp = PublishDiagnosticsParams {
-        uri: "file://"+currentDir+"/"+mainFile
-        diagnostics: diagnostics
+    i=0; for i < len(pdps), i++ {
+        sendDiagnostic(&pdps[i])
     }
-
-    sendDiagnostic(&pdp)
 
 }
 
