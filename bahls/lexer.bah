@@ -258,7 +258,6 @@ lexer(s cpstring, codeLength int) []Tok {
                         if c == '>' {
                             lc = memory[len(memory)-1]
                             if lc == '-' {
-                                memory[len(memory)-1] = <char>0
                                 i--
                                 break
                             }
@@ -272,7 +271,7 @@ lexer(s cpstring, codeLength int) []Tok {
             i--
             currentType = TOKEN_TYPE_VAR
             
-            memstr = arrAsStr(memory)
+            memstr = arrToStr(memory)
 
             if memstr in keywords {
                 currentType = TOKEN_TYPE_KEYWORD
