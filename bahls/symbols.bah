@@ -16,6 +16,7 @@ struct func extend symbol {
 
 struct strct extend symbol {
     membs: []variable*
+    methods: []cpstring
 }
 
 variables = []variable*

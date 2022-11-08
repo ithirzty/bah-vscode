@@ -121,11 +121,12 @@ validateMainFile() {
         } else if name == "var_end" {
             efile = splitStringBefore(string(path), ":")
             eline = strToInt(path[strlen(efile)+1:])
+            name = ej.str()
             k=len(variables)-1; for k > 0, k-- {
                 v = variables[k]
                 file = splitStringBefore(string(v.path), ":")
                 line = strToInt(v.path[strlen(file)+1:])
-                if efile == file && eline >= line {
+                if v.name == name && efile == file && eline >= line {
                     v.end = eline
                     break
                 }

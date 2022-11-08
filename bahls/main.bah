@@ -144,6 +144,23 @@ handleResolveCompletion(req request*) {
                 j=0; for j < len(s.membs), j++ {
                     decl += "  "+s.membs[j].name + ": " + s.membs[j].type + "\n"
                 }
+                j=0; for j < len(s.methods), j++ {
+                    k=0; for k < len(funcs), k++ {
+                        if funcs[k].name == s.name+"__"+s.methods[j] {
+                            args = ""
+                            fn = funcs[k]
+                            jj=1; for jj < len(fn.args), jj++ {
+                                a = fn.args[jj]
+                                args += a.name + " " + a.type
+                                if jj+1 < len(fn.args) {
+                                    args += ", "
+                                }
+                            }
+                            decl += "  "+s.methods[j]+"("+args+") "+funcs[k].returns+"\n"
+                            break
+                        }
+                    }
+                }
                 decl += "}\n```\n\n"
                 cr.documentation = MarkupContent {
                     kind: "markdown"
