@@ -37,7 +37,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.bah",
-				"match": "\\b(if|else|for|struct|const|return|extend|new|break|continue|default|switch|case|while|typedef|function|async|in|chan|map|buffer|capture|then)\\b"
+				"match": "\\b(if|else|for|struct|const|return|extend|new|break|continue|default|switch|case|while|typedef|function|async|in|chan|map|buffer|let|then)\\b"
 			},
 			{
 				"name": "entity.name.type",

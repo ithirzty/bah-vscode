@@ -282,7 +282,14 @@ main(args []cpstring) int {
 
         if name == "initialize" {
             handleInitialize(req)
-        } else if name == "initialized" {
+            continue
+        }
+
+        if fileExists(currentDir) == false {
+            continue
+        }
+        
+        if name == "initialized" {
             validateFiles(currentDir)
         } else if name == "textDocument/didSave" {
             validateFiles(currentDir)

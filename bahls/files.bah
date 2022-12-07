@@ -148,6 +148,7 @@ compileDebug() {
         mkdir(".vscode", 0777)
         fs.open("./.vscode/launch.json", "w")
         fs.writeFile("//This launch.json file is made to work with extensions such as 'cdt-gdb-vscode'
+//It was generated automatically by the Bah extension.
 {
     \"version\": \"0.2.0\",
     \"configurations\": [
@@ -155,6 +156,7 @@ compileDebug() {
             \"type\": \"gdb\",
             \"request\": \"launch\",
             \"name\": \"GDB (bah) launch\",
+            \"initCommands\": [\"handle SIGSEGV nostop\"],
             \"program\": \"${workspaceFolder}/.tmp_bah/debug\"
         }
     ]
@@ -164,7 +166,7 @@ compileDebug() {
     }
 }
 
-validateFiles(dir cpstring) bool {
+validateFiles(dir cpstring) bool {    
     logMsg("validating: "+dir)
     removeFile(".tmp_bah/debug")
     files = listFiles(dir)
